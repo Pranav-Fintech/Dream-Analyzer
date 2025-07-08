@@ -33,13 +33,6 @@ Built with calming color psychology, smooth animations, and a glassmorphism inte
 
 ---
 
-## 🌐 Live Demo
-
-> 🔗 [View Dream Analyzer (GitHub Pages)](https://yourusername.github.io/dream-analyzer/)  
-*(Replace the link with your actual GitHub Pages URL once published.)*
-
----
-
 ## 📸 Screenshots
 
 <details>

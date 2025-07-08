@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Analyzer - AI-Powered Dream Interpretation</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --deep-blue: #1e3a8a;
+            --purple: #7c3aed;
+            --soft-pink: #f472b6;
+            --teal: #14b8a6;
+            --gold: #f59e0b;
+            --orange: #ea580c;
+        }
+
+        .dark {
+            --deep-blue: #1e40af;
+            --purple: #8b5cf6;
+            --soft-pink: #f472b6;
+            --teal: #06b6d4;
+            --gold: #fbbf24;
+            --orange: #f97316;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--deep-blue) 0%, var(--purple) 50%, var(--teal) 100%);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .dark body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f766e 100%);
+        }
+
+        .glass-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .dark .glass-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .emotion-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: scale(1);
+        }
+
+        .emotion-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .emotion-btn.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+        }
+
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left: 4px solid var(--gold);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .gradient-text {
+            background: linear-gradient(45deg, var(--gold), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .analysis-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .dark .analysis-card {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--gold);
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .scroll-smooth {
+            scroll-behavior: smooth;
+        }
+
+        .dream-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .dream-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .dark .dream-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--gold);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="scroll-smooth">
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-4xl mx-auto text-center">
+            <div class="floating-animation">
+                <h1 class="text-5xl md:text-7xl font-bold text-white mb-6">
+                    Dream <span class="gradient-text">Analyzer</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-white opacity-90 mb-8">
+                    Unlock the secrets of your subconscious mind through AI-powered dream interpretation
+                </p>
+                <p class="text-lg text-white opacity-75 mb-12 max-w-2xl mx-auto">
+                    Discover the psychological meanings behind your dreams using advanced analysis combining Freudian, Jungian, and modern therapeutic frameworks
+                </p>
+            </div>
+            <button onclick="scrollToAnalyzer()" class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-yellow-500 hover:to-orange-600 transform hover:scale-105 transition-all duration-300 shadow-lg">
+                <i class="fas fa-brain mr-2"></i>
+                Start Dream Analysis
+            </button>
+        </div>
+    </section>
+
+    <!-- Dream Analyzer Section -->
+    <section id="analyzer" class="py-20 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-card rounded-3xl p-8 mb-8">
+                <h2 class="text-3xl font-bold text-white mb-6 text-center">
+                    <i class="fas fa-moon mr-3"></i>
+                    Tell Us About Your Dream
+                </h2>
+                
+                <form id="dreamForm" class="space-y-6">
+                    <div>
+                        <label class="block text-white text-lg font-medium mb-3">
+                            Describe your dream in detail
+                        </label>
+                        <textarea 
+                            id="dreamInput"
+                            class="dream-input w-full h-40 p-4 rounded-2xl text-white placeholder-gray-300 resize-none"
+                            placeholder="I dreamed I was flying over a city at night, feeling both excited and a little afraid. The buildings below looked like they were made of glass and the sky was filled with stars..."
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-white text-lg font-medium mb-4">
+                            What emotions did you experience? (Select all that apply)
+                        </label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="emotionGrid">
+                            <!-- Emotions will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button 
+                            type="submit"
+                            class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-12 py-4 rounded-full text-lg font-semibold hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-300 shadow-lg"
+                        >
+                            <i class="fas fa-magic mr-2"></i>
+                            Analyze My Dream
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden glass-card rounded-3xl p-8 text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-white text-lg">Analyzing your dream...</p>
+                <p class="text-white opacity-70">This may take a moment as we process your subconscious insights</p>
+            </div>
+
+            <!-- Analysis Results -->
+            <div id="analysisResults" class="hidden space-y-6">
+                <!-- Results will be populated by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Dream History Section -->
+    <section id="history" class="py-20 px-4">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold text-white mb-8 text-center">
+                <i class="fas fa-history mr-3"></i>
+                Your Dream History
+            </h2>
+            <div id="historyContainer" class="space-y-6">
+                <div class="glass-card rounded-3xl p-8 text-center">
+                    <p class="text-white opacity-70">No dream analyses yet. Start by analyzing your first dream above!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Theme Management
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('darkMode', isDarkMode);
+            updateTheme();
+        }
+
+        function updateTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (isDarkMode) {
+                body.classList.add('dark');
+                themeIcon.className = 'fas fa-sun';
+            } else {
+                body.classList.remove('dark');
+                themeIcon.className = 'fas fa-moon';
+            }
+        }
+
+        // Initialize theme
+        updateTheme();
+
+        // Emotions data
+        const emotions = [
+            { name: 'Joy', emoji: '😊', color: 'from-yellow-400 to-orange-400' },
+            { name: 'Fear', emoji: '😰', color: 'from-red-400 to-pink-400' },
+            { name: 'Excitement', emoji: '🤩', color: 'from-purple-400 to-pink-400' },
+            { name: 'Confusion', emoji: '😕', color: 'from-gray-400 to-blue-400' },
+            { name: 'Sadness', emoji: '😢', color: 'from-blue-400 to-indigo-400' },
+            { name: 'Peace', emoji: '😌', color: 'from-green-400 to-teal-400' },
+            { name: 'Anger', emoji: '😠', color: 'from-red-500 to-orange-500' },
+            { name: 'Surprise', emoji: '😲', color: 'from-yellow-400 to-pink-400' },
+            { name: 'Love', emoji: '🥰', color: 'from-pink-400 to-red-400' },
+            { name: 'Anxiety', emoji: '😰', color: 'from-purple-400 to-blue-400' },
+            { name: 'Curiosity', emoji: '🤔', color: 'from-indigo-400 to-purple-400' },
+            { name: 'Relief', emoji: '😌', color: 'from-green-400 to-blue-400' },
+            { name: 'Wonder', emoji: '😍', color: 'from-blue-400 to-purple-400' },
+            { name: 'Nostalgia', emoji: '🥺', color: 'from-indigo-400 to-pink-400' },
+            { name: 'Empowerment', emoji: '💪', color: 'from-orange-400 to-red-400' },
+            { name: 'Vulnerability', emoji: '🥺', color: 'from-pink-400 to-purple-400' }
+        ];
+
+        // Dream symbol interpretations
+        const dreamSymbols = {
+            flying: "Freedom, independence, escape from limitations, or spiritual transcendence",
+            falling: "Loss of control, insecurity, fear of failure, or need for grounding",
+            water: "Emotions, subconscious, purification, or life changes",
+            animals: "Instincts, untamed aspects of personality, or natural wisdom",
+            death: "Transformation, endings leading to new beginnings, or fear of change",
+            house: "The self, different aspects of personality, or life situations",
+            car: "Life direction, control over your path, or personal drive",
+            teeth: "Confidence, communication, personal power, or self-image concerns",
+            naked: "Vulnerability, authenticity, fear of exposure, or shame",
+            chase: "Avoidance, running from problems, or confronting fears",
+            school: "Learning, evaluation, preparation for life challenges",
+            fire: "Passion, transformation, destruction, or purification",
+            baby: "New beginnings, innocence, potential, or vulnerability",
+            mirror: "Self-reflection, identity, or how others perceive you",
+            mountain: "Challenges, goals, spiritual growth, or obstacles",
+            ocean: "Vast emotions, unconscious mind, or life's journey",
+            snake: "Transformation, healing, hidden knowledge, or fear",
+            bridge: "Transition, connection, overcoming obstacles",
+            darkness: "Unknown, fear, mystery, or hidden aspects of self",
+            light: "Awareness, hope, spiritual guidance, or clarity"
+        };
+
+        // Psychological frameworks
+        const psychologicalFrameworks = {
+            freudian: {
+                name: "Freudian Analysis",
+                description: "Dreams as wish fulfillment and expressions of repressed desires",
+                interpret: function(dream, emotions) {
+                    const sexual_symbols = ['snake', 'tunnel', 'tower', 'water', 'cave'];
+                    const aggressive_symbols = ['fire', 'chase', 'fight', 'weapon', 'storm'];
+                    
+                    let interpretation = "From a Freudian perspective, your dream may represent: ";
+                    
+                    if (emotions.includes('Fear') || emotions.includes('Anxiety')) {
+                        interpretation += "Repressed anxieties or conflicts seeking resolution. ";
+                    }
+                    
+                    if (emotions.includes('Joy') || emotions.includes('Excitement')) {
+                        interpretation += "Unconscious wish fulfillment or desires being expressed symbolically. ";
+                    }
+                    
+                    // Check for symbolic content
+                    const dreamLower = dream.toLowerCase();
+                    for (let symbol of sexual_symbols) {
+                        if (dreamLower.includes(symbol)) {
+                            interpretation += `The presence of ${symbol} may represent libidinal energy or sexual symbolism. `;
+                            break;
+                        }
+                    }
+                    
+                    for (let symbol of aggressive_symbols) {
+                        if (dreamLower.includes(symbol)) {
+                            interpretation += `The ${symbol} element suggests aggressive impulses or id-driven desires. `;
+                            break;
+                        }
+                    }
+                    
+                    return interpretation + "Dreams serve as a safe space for the unconscious to express what the conscious mind suppresses.";
+                }
+            },
+            jungian: {
+                name: "Jungian Analysis",
+                description: "Dreams as tools for individuation and accessing the collective unconscious",
+                interpret: function(dream, emotions) {
+                    const archetypal_symbols = ['shadow', 'mother', 'father', 'child', 'wise', 'hero', 'journey'];
+                    const individuation_symbols = ['transformation', 'death', 'rebirth', 'integration', 'wholeness'];
+                    
+                    let interpretation = "Through a Jungian lens, your dream suggests: ";
+                    
+                    if (emotions.includes('Confusion') || emotions.includes('Curiosity')) {
+                        interpretation += "An active individuation process where your psyche is integrating unconscious material. ";
+                    }
+                    
+                    if (emotions.includes('Fear') && emotions.includes('Excitement')) {
+                        interpretation += "Confrontation with your shadow self - the parts of personality you've rejected or hidden. ";
+                    }
+                    
+                    const dreamLower = dream.toLowerCase();
+                    for (let symbol of archetypal_symbols) {
+                        if (dreamLower.includes(symbol)) {
+                            interpretation += `The ${symbol} represents an archetypal figure from the collective unconscious. `;
+                            break;
+                        }
+                    }
+                    
+                    if (emotions.includes('Wonder') || emotions.includes('Peace')) {
+                        interpretation += "Connection to the collective unconscious and universal human experiences. ";
+                    }
+                    
+                    return interpretation + "This dream offers guidance for your personal growth and self-realization journey.";
+                }
+            },
+            modern: {
+                name: "Modern Cognitive Analysis",
+                description: "Dreams as emotional processing and memory consolidation",
+                interpret: function(dream, emotions) {
+                    let interpretation = "Modern dream research suggests: ";
+                    
+                    if (emotions.includes('Anxiety') || emotions.includes('Fear')) {
+                        interpretation += "Your REM sleep is processing stressful experiences and helping with emotional regulation. ";
+                    }
+                    
+                    if (emotions.includes('Sadness') || emotions.includes('Vulnerability')) {
+                        interpretation += "The dream may be helping you process grief, loss, or emotional challenges from waking life. ";
+                    }
+                    
+                    if (emotions.includes('Joy') || emotions.includes('Love')) {
+                        interpretation += "Positive emotions in dreams often consolidate happy memories and reinforce well-being. ";
+                    }
+                    
+                    // Check for problem-solving elements
+                    const problemSolving = ['solution', 'answer', 'path', 'way', 'choice', 'decision'];
+                    const dreamLower = dream.toLowerCase();
+                    
+                    for (let element of problemSolving) {
+                        if (dreamLower.includes(element)) {
+                            interpretation += "Your dreaming mind appears to be working on problem-solving and decision-making processes. ";
+                            break;
+                        }
+                    }
+                    
+                    return interpretation + "Dreams serve as a virtual reality simulator for processing emotions and preparing for future challenges.";
+                }
+            }
+        };
+
+        // Initialize emotions grid
+        function initializeEmotions() {
+            const emotionGrid = document.getElementById('emotionGrid');
+            emotionGrid.innerHTML = '';
+            
+            emotions.forEach(emotion => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `emotion-btn bg-gradient-to-r ${emotion.color} text-white px-4 py-3 rounded-2xl font-medium text-sm flex items-center justify-center space-x-2 hover:shadow-lg`;
+                button.innerHTML = `
+                    <span class="text-xl">${emotion.emoji}</span>
+                    <span>${emotion.name}</span>
+                `;
+                button.onclick = () => toggleEmotion(button, emotion.name);
+                emotionGrid.appendChild(button);
+            });
+        }
+
+        // Toggle emotion selection
+        function toggleEmotion(button, emotionName) {
+            button.classList.toggle('selected');
+            
+            // Add/remove from selected emotions
+            if (!window.selectedEmotions) {
+                window.selectedEmotions = new Set();
+            }
+            
+            if (window.selectedEmotions.has(emotionName)) {
+                window.selectedEmotions.delete(emotionName);
+            } else {
+                window.selectedEmotions.add(emotionName);
+            }
+        }
+
+        // Analyze dream content for symbols
+        function analyzeSymbols(dreamText) {
+            const foundSymbols = {};
+            const dreamLower = dreamText.toLowerCase();
+            
+            Object.keys(dreamSymbols).forEach(symbol => {
+                if (dreamLower.includes(symbol)) {
+                    foundSymbols[symbol] = dreamSymbols[symbol];
+                }
+            });
+            
+            return foundSymbols;
+        }
+
+        // Generate personalized guidance
+        function generateGuidance(dream, emotions) {
+            let guidance = [];
+            
+            if (emotions.includes('Fear') || emotions.includes('Anxiety')) {
+                guidance.push("Practice relaxation techniques before sleep, such as deep breathing or meditation");
+                guidance.push("Consider journaling about your fears to better understand their roots");
+                guidance.push("Create a calming bedtime routine to promote peaceful sleep");
+            }
+            
+            if (emotions.includes('Sadness') || emotions.includes('Vulnerability')) {
+                guidance.push("Allow yourself to feel and process these emotions rather than suppressing them");
+                guidance.push("Consider speaking with a trusted friend or counselor about your feelings");
+                guidance.push("Practice self-compassion and remind yourself that difficult emotions are temporary");
+            }
+            
+            if (emotions.includes('Joy') || emotions.includes('Love')) {
+                guidance.push("Reflect on what brings you happiness and try to incorporate more of it into your daily life");
+                guidance.push("Express gratitude for the positive aspects of your life");
+                guidance.push("Share your joy with others to amplify positive feelings");
+            }
+            
+            if (emotions.includes('Confusion') || emotions.includes('Curiosity')) {
+                guidance.push("Embrace uncertainty as an opportunity for growth and learning");
+                guidance.push("Take time to explore your interests and values more deeply");
+                guidance.push("Consider meditation or mindfulness practices to gain clarity");
+            }
+            
+            if (emotions.includes('Anger')) {
+                guidance.push("Find healthy outlets for expressing anger, such as exercise or creative activities");
+                guidance.push("Examine what underlying needs or boundaries might be involved");
+                guidance.push("Practice assertive communication in your waking relationships");
+            }
+            
+            // Default guidance if no specific emotions
+            if (guidance.length === 0) {
+                guidance.push("Keep a dream journal to track patterns and themes over time");
+                guidance.push("Pay attention to recurring symbols or emotions in your dreams");
+                guidance.push("Consider how your dreams might reflect your current life situations");
+            }
+            
+            return guidance;
+        }
+
+        // Main dream analysis function
+        function analyzeDream(dreamText, selectedEmotions) {
+            const emotionArray = Array.from(selectedEmotions);
+            const symbols = analyzeSymbols(dreamText);
+            const guidance = generateGuidance(dreamText, emotionArray);
+            
+            // Generate analysis from each framework
+            const analyses = {};
+            Object.keys(psychologicalFrameworks).forEach(framework => {
+                analyses[framework] = psychologicalFrameworks[framework].interpret(dreamText, emotionArray);
+            });
+            
+            return {
+                dream: dreamText,
+                emotions: emotionArray,
+                symbols: symbols,
+                guidance: guidance,
+                analyses: analyses,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        // Display analysis results
+        function displayAnalysis(analysis) {
+            const resultsContainer = document.getElementById('analysisResults');
+            resultsContainer.innerHTML = '';
+            
+            // Create confetti effect
+            createConfetti();
+            
+            // Dream Content Analysis Card
+            const contentCard = document.createElement('div');
+            contentCard.className = 'analysis-card rounded-3xl p-6';
+            contentCard.innerHTML = `
+                <h3 class="text-2xl font-bold text-white mb-4">
+                    <i class="fas fa-search mr-2 text-yellow-400"></i>
+                    Dream Content Analysis
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-lg font-semibold text-white mb-2">Your Dream:</h4>
+                        <p class="text-gray-200 italic">"${analysis.dream}"</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold text-white mb-2">Emotions Experienced:</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${analysis.emotions.map(emotion => `
+                                <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm">
+                                    ${emotion}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultsContainer.appendChild(contentCard);
+            
+            // Psychological Frameworks
+            Object.keys(analysis.analyses).forEach(framework => {
+                const frameworkCard = document.createElement('div');
+                frameworkCard.className = 'analysis-card rounded-3xl p-6';
+                frameworkCard.innerHTML = `
+                    <h3 class="text-2xl font-bold text-white mb-4">
+                        <i class="fas fa-brain mr-2 text-blue-400"></i>
+                        ${psychologicalFrameworks[framework].name}
+                    </h3>
+                    <p class="text-gray-300 mb-4">${psychologicalFrameworks[framework].description}</p>
+                    <p class="text-gray-200">${analysis.analyses[framework]}</p>
+                `;
+                resultsContainer.appendChild(frameworkCard);
+            });
+            
+            // Symbolic Dictionary
+            if (Object.keys(analysis.symbols).length > 0) {
+                const symbolsCard = document.createElement('div');
+                symbolsCard.className = 'analysis-card rounded-3xl p-6';
+                symbolsCard.innerHTML = `
+                    <h3 class="text-2xl font-bold text-white mb-4">
+                        <i class="fas fa-book mr-2 text-green-400"></i>
+                        Symbolic Dictionary
+                    </h3>
+                    <div class="space-y-3">
+                        ${Object.entries(analysis.symbols).map(([symbol, meaning]) => `
+                            <div class="border-l-4 border-yellow-400 pl-4">
+                                <h4 class="text-lg font-semibold text-white capitalize">${symbol}</h4>
+                                <p class="text-gray-200">${meaning}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                resultsContainer.appendChild(symbolsCard);
+            }
+            
+            // Personal Guidance
+            const guidanceCard = document.createElement('div');
+            guidanceCard.className = 'analysis-card rounded-3xl p-6';
+            guidanceCard.innerHTML = `
+                <h3 class="text-2xl font-bold text-white mb-4">
+                    <i class="fas fa-lightbulb mr-2 text-orange-400"></i>
+                    Personal Guidance
+                </h3>
+                <div class="space-y-3">
+                    ${analysis.guidance.map(guidance => `
+                        <div class="flex items-start space-x-3">
+                            <div class="w-2 h-2 bg-orange-400 rounded-full mt-2 flex-shrink-0"></div>
+                            <p class="text-gray-200">${guidance}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            resultsContainer.appendChild(guidanceCard);
+            
+            resultsContainer.classList.remove('hidden');
+            
+            // Smooth scroll to results
+            setTimeout(() => {
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#f59e0b', '#ea580c', '#f472b6', '#7c3aed', '#14b8a6'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }, i * 100);
+            }
+        }
+
+        // Save to history
+        function saveToHistory(analysis) {
+            let history = JSON.parse(localStorage.getItem('dreamHistory') || '[]');
+            history.unshift(analysis);
+            
+            // Keep only last 10 analyses
+            if (history.length > 10) {
+                history = history.slice(0, 10);
+            }
+            
+            localStorage.setItem('dreamHistory', JSON.stringify(history));
+            updateHistoryDisplay();
+        }
+
+        // Update history display
+        function updateHistoryDisplay() {
+            const historyContainer = document.getElementById('historyContainer');
+            const history = JSON.parse(localStorage.getItem('dreamHistory') || '[]');
+            
+            if (history.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="glass-card rounded-3xl p-8 text-center">
+                        <p class="text-white opacity-70">No dream analyses yet. Start by analyzing your first dream above!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            historyContainer.innerHTML = '';
+            
+            history.forEach((analysis, index) => {
+                const historyCard = document.createElement('div');
+                historyCard.className = 'glass-card rounded-3xl p-6';
+                historyCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold text-white">Dream Analysis #${history.length - index}</h3>
+                        <span class="text-sm text-gray-300">${new Date(analysis.timestamp).toLocaleDateString()}</span>
+                    </div>
+                    <p class="text-gray-200 mb-4 italic">"${analysis.dream.substring(0, 100)}..."</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${analysis.emotions.map(emotion => `
+                            <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs">
+                                ${emotion}
+                            </span>
+                        `).join('')}
+                    </div>
+                    <button onclick="showFullAnalysis(${index})" class="text-yellow-400 hover:text-yellow-300 transition-colors">
+                        <i class="fas fa-eye mr-1"></i>
+                        View Full Analysis
+                    </button>
+                `;
+                historyContainer.appendChild(historyCard);
+            });
+        }
+
+        // Show full analysis from history
+        function showFullAnalysis(index) {
+            const history = JSON.parse(localStorage.getItem('dreamHistory') || '[]');
+            const analysis = history[index];
+            
+            if (analysis) {
+                displayAnalysis(analysis);
+                document.getElementById('analyzer').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Form submission
+        document.getElementById('dreamForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const dreamText = document.getElementById('dreamInput').value.trim();
+            const selectedEmotions = window.selectedEmotions || new Set();
+            
+            if (!dreamText) {
+                alert('Please describe your dream');
+                return;
+            }
+            
+            if (selectedEmotions.size === 0) {
+                alert('Please select at least one emotion');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('analysisResults').classList.add('hidden');
+            
+            // Simulate processing time
+            setTimeout(() => {
+                const analysis = analyzeDream(dreamText, selectedEmotions);
+                
+                document.getElementById('loadingState').classList.add('hidden');
+                displayAnalysis(analysis);
+                saveToHistory(analysis);
+                
+                // Reset form
+                document.getElementById('dreamForm').reset();
+                window.selectedEmotions = new Set();
+                
+                // Reset emotion buttons
+                document.querySelectorAll('.emotion-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+            }, 2000);
+        });
+
+        // Smooth scroll to analyzer
+        function scrollToAnalyzer() {
+            document.getElementById('analyzer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEmotions();
+            updateHistoryDisplay();
+        });
+    </script>
+</body>
+</html>

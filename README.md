@@ -58,11 +58,3 @@ Built with calming color psychology, smooth animations, and a glassmorphism inte
 | NLP Logic  | Custom symbolic pattern matching    |
 | Frameworks | Freudian, Jungian, Cognitive        |
 
----
-
-## 🛠️ How to Run Locally
-
-1. **Clone this repo**  
-   ```bash
-   git clone https://github.com/yourusername/dream-analyzer.git
-   cd dream-analyzer

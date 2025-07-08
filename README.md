@@ -33,10 +33,7 @@ Built with calming color psychology, smooth animations, and a glassmorphism inte
 
 ---
 
-## 📸 Screenshots
 
-<details>
-<summary>Click to view UI highlights</summary>
 
 - 🧾 Dream Input Interface  
 - 🎭 Emotion Selector Grid  
